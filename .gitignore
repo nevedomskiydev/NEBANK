@@ -12,3 +12,7 @@ build/
 data/
 *.sqlite
 backend/.pytest_cache/
+
+# build artifacts
+*.zip
+nebank.zip
