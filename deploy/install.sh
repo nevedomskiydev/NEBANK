@@ -46,11 +46,18 @@ if ! command -v docker >/dev/null 2>&1; then
   systemctl enable --now docker
 fi
 
-# --- 3. Clean the server (free 80/443, remove prior NEBANK) ------------------
+# --- 3. Clean the server (free 80/443, remove any prior deployment) ----------
 say "Cleaning previous services"
-systemctl stop nginx apache2 caddy 2>/dev/null || true
-systemctl disable nginx apache2 caddy 2>/dev/null || true
+# Stop known prior bot deployments (e.g. an earlier 'finflow' systemd service)
+# and any common web servers that would hold ports 80/443.
+for svc in finflow nebank nebank-bot nginx apache2 caddy; do
+  systemctl stop "$svc" 2>/dev/null || true
+  systemctl disable "$svc" 2>/dev/null || true
+done
 docker compose -f "$ROOT/docker-compose.yml" down --remove-orphans 2>/dev/null || true
+# Free 80/443/8080 from any leftover process so Caddy can bind them.
+command -v fuser >/dev/null 2>&1 && fuser -k 80/tcp 443/tcp 8080/tcp 2>/dev/null || true
+sleep 1
 if [ "${1:-}" = "--wipe" ]; then
   say "Wiping NEBANK volumes (database reset)"
   docker compose -f "$ROOT/docker-compose.yml" down -v 2>/dev/null || true
