@@ -15,12 +15,16 @@ ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 PIP_NO_CACHE_DIR=1 \
 # Real OCR + QR (keyless): Tesseract (rus+eng) and ZBar.
 RUN apt-get update && apt-get install -y --no-install-recommends \
       tesseract-ocr tesseract-ocr-rus tesseract-ocr-eng \
-      libzbar0 libgl1 libglib2.0-0 curl \
+      libzbar0 libgl1 libglib2.0-0 ffmpeg curl \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 COPY backend/requirements.txt ./
 RUN pip install -r requirements.txt
+
+# Pre-download the local voice model so the first voice message is instant
+# and no model download is needed at runtime (fully self-hosted, free).
+RUN python -c "from faster_whisper import WhisperModel; WhisperModel('base', device='cpu', compute_type='int8')"
 
 COPY backend/ ./
 COPY --from=web /web/dist /app/miniapp

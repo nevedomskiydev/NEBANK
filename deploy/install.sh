@@ -63,6 +63,16 @@ if [ "${1:-}" = "--wipe" ]; then
   docker compose -f "$ROOT/docker-compose.yml" down -v 2>/dev/null || true
 fi
 
+# --- 3b. Swap safety (local voice model needs headroom on a 4GB box) ---------
+if [ "$(free -m | awk '/^Swap:/{print $2}')" = "0" ] && [ ! -f /swapfile ]; then
+  say "Adding a 2GB swap file (headroom for the local voice model)"
+  fallocate -l 2G /swapfile 2>/dev/null || dd if=/dev/zero of=/swapfile bs=1M count=2048
+  chmod 600 /swapfile
+  mkswap /swapfile >/dev/null 2>&1 || true
+  swapon /swapfile 2>/dev/null || true
+  grep -q '/swapfile' /etc/fstab || echo '/swapfile none swap sw 0 0' >> /etc/fstab
+fi
+
 # --- 4. Build & start --------------------------------------------------------
 say "Building and starting NEBANK (this takes a few minutes on first run)"
 docker compose -f "$ROOT/docker-compose.yml" up -d --build

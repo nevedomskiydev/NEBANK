@@ -31,18 +31,48 @@ def _decode_qr(img) -> list[str]:
         return []
 
 
-def _ocr_text(img) -> str:
+def _preprocess(img):
+    """Lift Tesseract accuracy: upscale small images, grayscale, boost contrast,
+    sharpen and binarize. Pure Pillow, free, runs on the server."""
     try:
-        import pytesseract  # type: ignore
+        from PIL import ImageFilter, ImageOps  # type: ignore
 
-        return pytesseract.image_to_string(img, lang="rus+eng")
+        g = ImageOps.grayscale(img)
+        w, h = g.size
+        # upscale so small phone photos / screenshots have enough resolution
+        target = 1600
+        if max(w, h) < target:
+            scale = target / max(w, h)
+            g = g.resize((int(w * scale), int(h * scale)))
+        g = ImageOps.autocontrast(g, cutoff=2)
+        g = g.filter(ImageFilter.SHARPEN)
+        # adaptive-ish threshold via point on an autocontrasted image
+        g = g.point(lambda p: 255 if p > 150 else 0)
+        return g
     except Exception:
+        return img
+
+
+def _ocr_text(img) -> str:
+    pre = _preprocess(img)
+    cfg = "--oem 1 --psm 6"
+    for image in (pre, img):
         try:
             import pytesseract  # type: ignore
 
-            return pytesseract.image_to_string(img)
+            txt = pytesseract.image_to_string(image, lang="rus+eng", config=cfg)
+            if txt.strip():
+                return txt
         except Exception:
-            return ""
+            try:
+                import pytesseract  # type: ignore
+
+                txt = pytesseract.image_to_string(image, config=cfg)
+                if txt.strip():
+                    return txt
+            except Exception:
+                continue
+    return ""
 
 
 def _find_total(text: str) -> float | None:

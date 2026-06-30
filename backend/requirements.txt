@@ -19,3 +19,6 @@ pytesseract==0.3.13
 orjson==3.10.7
 tenacity==9.0.0
 cachetools==5.5.0
+# Local, free, on-server voice transcription (no external API, no per-use cost)
+faster-whisper==1.0.3
+requests==2.32.3
