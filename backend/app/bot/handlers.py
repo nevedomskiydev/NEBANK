@@ -359,31 +359,39 @@ async def on_photo(message: types.Message):
         return
     tg_file = await bot.get_file(file_id)
     buf = await bot.download_file(tg_file.file_path)
-    res = recognize(buf.read())
+    image_bytes = buf.read()
+
+    entries: list[ParsedEntry] = []
+
+    # 1) Best quality: vision model (only if an LLM key is configured).
+    from app.services.vision import extract_from_image
+    entries = await extract_from_image(image_bytes, cur, lang)
+
+    # 2) Free fallback: Tesseract + QR.
+    res = recognize(image_bytes) if not entries else None
     try:
         await note.delete()
     except Exception:
         pass
 
-    entries: list[ParsedEntry] = []
-    # QR amount first (FNS receipts etc.)
-    from app.services.ocr import qr_to_amount
-    for payload in res.qr:
-        amt = qr_to_amount(payload)
-        if amt:
-            entries.append(ParsedEntry(amount=amt, currency=cur, kind="expense",
-                                       title="Receipt" if lang != "ru" else "Чек",
-                                       occurred_at=date.today(), raw=payload))
-    if not entries and res.lines:
-        # try parse each line; else use the receipt total
-        for ln in res.lines:
-            for e in parse_message(ln, cur):
-                if e.title:
-                    entries.append(e)
-        if not entries and res.total:
-            entries.append(ParsedEntry(amount=res.total, currency=cur, kind="expense",
-                                       title="Receipt" if lang != "ru" else "Чек",
-                                       occurred_at=date.today(), raw=res.text[:200]))
+    if not entries and res is not None:
+        from app.services.ocr import qr_to_amount
+        receipt = "Чек" if lang == "ru" else "Receipt"
+        # QR amount first (FNS receipts etc.)
+        for payload in res.qr:
+            amt = qr_to_amount(payload)
+            if amt:
+                entries.append(ParsedEntry(amount=amt, currency=cur, kind="expense",
+                                           title=receipt, occurred_at=date.today(), raw=payload))
+        if not entries and res.lines:
+            # try parse each line; else use the receipt total
+            for ln in res.lines:
+                for e in parse_message(ln, cur):
+                    if e.title:
+                        entries.append(e)
+            if not entries and res.total:
+                entries.append(ParsedEntry(amount=res.total, currency=cur, kind="expense",
+                                           title=receipt, occurred_at=date.today(), raw=res.text[:200]))
     if not entries:
         await message.answer(t(lang, "not_understood"))
         return

@@ -17,7 +17,7 @@ Re-verified each iteration per TZ §18. Status: `done` / `partial` / `pending`.
 | R11 | 7 | Crypto: exactly BTC, ETH, USDT, TRX; networks bitcoin/erc20/trc20; tx link → crypto expense; USDT asks amount; input hints | done | `services/crypto.py`, `bot/handlers/capture.py` |
 | R12 | 8 | Bank SMS: forward → auto record; dedup so the same SMS never doubles | done | `services/parser/sms_parser.py`, dedup hash |
 | R13 | 9 | Voice RU/EN with recognition-language choice; real quality | partial (real via Whisper if key/binary present; graceful guidance otherwise) | `services/voice.py` |
-| R14 | 10 | OCR: printed receipts, screenshots, QR, documents; multi-entry from one photo; handwriting best-effort; always reacts meaningfully | partial (Tesseract + QR keyless real; LLM-vision optional) | `services/ocr.py` |
+| R14 | 10 | OCR: printed receipts, screenshots, QR, documents; multi-entry from one photo; handwriting best-effort; always reacts meaningfully | done (vision-LLM path for high quality when `LLM_API_KEY` set; Tesseract+QR keyless fallback) | `services/vision.py`, `services/ocr.py` |
 | R15 | 11 | Chat reports: now/week/month image w/ chart + numbers (chart in ALL reports); balance debit/credit/net; history by day; share-by-link; Excel export; quick lang/currency; subscriptions & categories partly in chat | done | `services/reports.py`, `bot/handlers/reports.py`, `services/export.py` |
 | R16 | 12.1 | Dashboard: balance/income/expense per period; signature donut with drill-into-category on tap; trend graph; recent ops; pleasant colors | done | `miniapp/src/pages/Dashboard.tsx`, `DonutChart` |
 | R17 | 12.2 | History: full ops, filters + search, edit/delete; data never disappears; consistent across chat+dashboard | done | `miniapp History`, shared DB |
