@@ -1,9 +1,13 @@
 """Localized bot command menu. Re-applied per-user on language switch (TZ §3)."""
 from __future__ import annotations
 
-from aiogram.types import BotCommand, BotCommandScopeChat, BotCommandScopeDefault
+from aiogram.types import (
+    BotCommand, BotCommandScopeChat, BotCommandScopeDefault,
+    MenuButtonWebApp, WebAppInfo,
+)
 
 from app.bot.loader import bot
+from app.config import settings
 from app.core.i18n import t
 
 _KEYS = [
@@ -24,3 +28,13 @@ async def set_default_commands() -> None:
 
 async def set_user_commands(chat_id: int, lang: str) -> None:
     await bot.set_my_commands(_commands(lang), scope=BotCommandScopeChat(chat_id=chat_id))
+
+
+async def set_menu_button() -> None:
+    """Make the chat menu button open the Mini App (no BotFather step needed)."""
+    await bot.set_chat_menu_button(
+        menu_button=MenuButtonWebApp(
+            text="NEBANK",
+            web_app=WebAppInfo(url=settings.public_base_url),
+        )
+    )

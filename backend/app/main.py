@@ -14,7 +14,7 @@ from fastapi.staticfiles import StaticFiles
 from app.api.routes import router as api_router
 from app.bot.handlers import register_handlers
 from app.bot.loader import bot, dp
-from app.bot.menu import set_default_commands
+from app.bot.menu import set_default_commands, set_menu_button
 from app.config import settings
 from app.db import Base, engine
 
@@ -35,8 +35,9 @@ async def lifespan(app: FastAPI):
     if settings.bot_token:
         try:
             await set_default_commands()
+            await set_menu_button()
         except Exception as exc:  # pragma: no cover
-            log.warning("set_my_commands failed: %s", exc)
+            log.warning("bot menu setup failed: %s", exc)
         if settings.use_webhook:
             try:
                 await bot.set_webhook(

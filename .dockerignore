@@ -1,0 +1,15 @@
+**/node_modules
+**/.venv
+**/venv
+**/__pycache__
+**/*.pyc
+**/dist
+**/build
+.git
+*.zip
+**/.pytest_cache
+**/*.db
+**/*.sqlite
+data
+backend/test.db
+backend/e2e.db

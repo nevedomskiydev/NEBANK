@@ -1,0 +1,11 @@
+# Automatic HTTPS via Let's Encrypt for the public Mini App domain.
+# sslip.io resolves 104-194-143-122.sslip.io -> 104.194.143.122, so ACME HTTP-01 works.
+104-194-143-122.sslip.io {
+	encode zstd gzip
+	reverse_proxy app:8000
+	header {
+		Strict-Transport-Security "max-age=31536000;"
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+	}
+}
