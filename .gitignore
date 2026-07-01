@@ -16,3 +16,7 @@ backend/.pytest_cache/
 # build artifacts
 *.zip
 nebank.zip
+
+# sandbox test artifact
+backend/_ca.crt
+*.crt
